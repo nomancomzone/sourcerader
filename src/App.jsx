@@ -1,36 +1,53 @@
 import { useState } from 'react'
-import './App.css'
 
 const PLATFORMS = [
-  { id: 'aliexpress', name: 'AliExpress', color: '#D85A30', bg: '#FAECE7' },
-  { id: 'dhgate',     name: 'DHgate',     color: '#185FA5', bg: '#E6F1FB' },
-  { id: 'etsy',       name: 'Etsy',       color: '#F56400', bg: '#FEF0E7' },
-  { id: 'banggood',   name: 'Banggood',   color: '#CC0000', bg: '#FDEAEA' },
+  { id: 'aliexpress', name: 'AliExpress', color: '#FF6A00', bg: '#FFF3EB', border: '#FF6A00', short: 'Ali' },
+  { id: 'dhgate',     name: 'DHgate',     color: '#0066CC', bg: '#EBF4FF', border: '#0066CC', short: 'DH'  },
+  { id: 'etsy',       name: 'Etsy',       color: '#F45800', bg: '#FFF0EB', border: '#F45800', short: 'Etsy'},
+  { id: 'banggood',   name: 'Banggood',   color: '#CC0000', bg: '#FFEBEB', border: '#CC0000', short: 'Bang'},
 ]
 
 const DUMMY = [
-  { id:'aliexpress', price:6.49, shipping:'12–20 days', shippingDays:16, rating:4.8, reviews:12430, aiScore:82, reliability:78, value:95, quality:72, pros:'Free shipping', cons:'Long delivery' },
-  { id:'dhgate',     price:5.20, shipping:'15–25 days', shippingDays:20, rating:4.6, reviews:8870,  aiScore:74, reliability:70, value:98, quality:65, pros:'Lowest price',  cons:'Slow response' },
-  { id:'etsy',       price:24.00,shipping:'5–10 days',  shippingDays:7,  rating:4.9, reviews:340,   aiScore:91, reliability:95, value:48, quality:96, pros:'Premium quality',cons:'Higher price' },
-  { id:'banggood',   price:7.80, shipping:'10–18 days', shippingDays:14, rating:4.7, reviews:5210,  aiScore:79, reliability:80, value:88, quality:76, pros:'Good reviews',   cons:'Average brand' },
+  { id:'aliexpress', price:6.49,  shipping:'12–20 days', shippingDays:16, rating:4.8, reviews:12430, aiScore:82, reliability:78, value:95, quality:72, pros:'Free shipping',   cons:'Long delivery' },
+  { id:'dhgate',     price:5.20,  shipping:'15–25 days', shippingDays:20, rating:4.6, reviews:8870,  aiScore:74, reliability:70, value:98, quality:65, pros:'Lowest price',    cons:'Slow response' },
+  { id:'etsy',       price:24.00, shipping:'5–10 days',  shippingDays:7,  rating:4.9, reviews:340,   aiScore:91, reliability:95, value:48, quality:96, pros:'Premium quality', cons:'Higher price'  },
+  { id:'banggood',   price:7.80,  shipping:'10–18 days', shippingDays:14, rating:4.7, reviews:5210,  aiScore:79, reliability:80, value:88, quality:76, pros:'Good reviews',    cons:'Average brand' },
 ]
 
 const METRICS = [
-  { key: 'aiScore',     label: 'AI Score' },
-  { key: 'reliability', label: 'Reliability' },
-  { key: 'value',       label: 'Value' },
-  { key: 'quality',     label: 'Quality' },
+  { key:'aiScore',     label:'AI Score'     },
+  { key:'reliability', label:'Reliability'  },
+  { key:'value',       label:'Value'        },
+  { key:'quality',     label:'Quality'      },
 ]
 
 function barColor(v) {
-  if (v >= 85) return '#1D9E75'
-  if (v >= 65) return '#BA7517'
-  return '#D85A30'
+  if (v >= 85) return 'bg-emerald-500'
+  if (v >= 65) return 'bg-amber-500'
+  return 'bg-red-500'
+}
+
+function textColor(v) {
+  if (v >= 85) return 'text-emerald-600'
+  if (v >= 65) return 'text-amber-600'
+  return 'text-red-500'
+}
+
+function PlatformBadge({ p }) {
+  return (
+    <div
+      className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border-2"
+      style={{ color: p.color, background: p.bg, borderColor: p.border }}
+    >
+      <span className="w-2 h-2 rounded-full" style={{ background: p.color }}></span>
+      {p.name}
+    </div>
+  )
 }
 
 export default function App() {
-  const [query, setQuery] = useState('')
-  const [active, setActive] = useState(new Set(['aliexpress','dhgate','etsy','banggood']))
+  const [query, setQuery]     = useState('')
+  const [active, setActive]   = useState(new Set(['aliexpress','dhgate','etsy','banggood']))
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(false)
   const [imgFile, setImgFile] = useState(null)
@@ -46,172 +63,212 @@ export default function App() {
   function handleSearch() {
     if (!query && !imgFile) return
     setLoading(true)
+    setResults(null)
     setTimeout(() => {
       const data = DUMMY.filter(d => active.has(d.id))
-      setResults({ query: query || 'product', data })
+      setResults({ query: query || 'uploaded photo', data })
       setLoading(false)
     }, 1400)
   }
 
   function handleImg(e) {
     const file = e.target.files[0]
-    if (file) setImgFile(file)
+    if (file) { setImgFile(file); setQuery('') }
   }
 
   const activePlatforms = PLATFORMS.filter(p => active.has(p.id))
-  const gridCols = `160px ${activePlatforms.map(() => '1fr').join(' ')}`
+  const resultData = results?.data || []
 
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px 16px', fontFamily: 'system-ui, sans-serif' }}>
+    <div className="min-h-screen bg-gray-50">
 
       {/* Header */}
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#1D9E75', display: 'inline-block' }}></span>
-          <span style={{ fontSize: 22, fontWeight: 600 }}>SourceRadar</span>
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
+            <span className="text-xl font-bold text-gray-900">SourceRadar</span>
+          </div>
+          <span className="text-xs text-gray-400 hidden sm:block">Compare suppliers. Find the best deal.</span>
         </div>
-        <div style={{ fontSize: 13, color: '#888' }}>Compare suppliers across platforms — find the best deal instantly</div>
-      </div>
+      </header>
 
-      {/* Search Box */}
-      <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '16px', marginBottom: 16 }}>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <input
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSearch()}
-            placeholder="Search any product... e.g. wireless earbuds"
-            style={{ flex: 1, border: '1px solid #e5e7eb', borderRadius: 8, padding: '8px 12px', fontSize: 15, outline: 'none' }}
-          />
-          <label style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: '8px 14px', fontSize: 13, cursor: 'pointer', background: '#f9fafb', display: 'flex', alignItems: 'center', gap: 6 }}>
-            📷 Photo
-            <input type="file" accept="image/*" onChange={handleImg} style={{ display: 'none' }} />
-          </label>
-          <button
-            onClick={handleSearch}
-            style={{ background: '#1D9E75', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 20px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
-          >
-            Search
-          </button>
+      <main className="max-w-6xl mx-auto px-4 py-8">
+
+        {/* Hero */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Find the Best Supplier, Instantly</h1>
+          <p className="text-gray-500 text-base">Search any product and compare AliExpress, DHgate, Etsy & Banggood side by side</p>
         </div>
 
-        {imgFile && (
-          <div style={{ marginTop: 8, fontSize: 13, color: '#888' }}>
-            📷 {imgFile.name}
-            <span onClick={() => setImgFile(null)} style={{ marginLeft: 8, cursor: 'pointer' }}>✕</span>
+        {/* Search Box */}
+        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-5 mb-6">
+          <div className="flex gap-2 mb-4">
+            <input
+              value={query}
+              onChange={e => { setQuery(e.target.value); setImgFile(null) }}
+              onKeyDown={e => e.key === 'Enter' && handleSearch()}
+              placeholder="Search any product... e.g. wireless earbuds, yoga mat"
+              className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 bg-gray-50"
+            />
+            <label className="flex items-center gap-2 px-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-600 bg-gray-50 cursor-pointer hover:bg-gray-100">
+              📷 <span className="hidden sm:block">Photo</span>
+              <input type="file" accept="image/*" onChange={handleImg} className="hidden" />
+            </label>
+            <button
+              onClick={handleSearch}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-colors"
+            >
+              Search
+            </button>
+          </div>
+
+          {imgFile && (
+            <div className="flex items-center gap-2 mb-3 text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2">
+              <span>📷 {imgFile.name}</span>
+              <button onClick={() => setImgFile(null)} className="ml-auto text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+          )}
+
+          {/* Platform chips */}
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="text-xs text-gray-400 font-medium">Sources:</span>
+            {PLATFORMS.map(p => (
+              <button
+                key={p.id}
+                onClick={() => togglePlatform(p.id)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border-2 transition-all"
+                style={active.has(p.id)
+                  ? { color: p.color, background: p.bg, borderColor: p.color }
+                  : { color: '#9ca3af', background: '#f9fafb', borderColor: '#e5e7eb' }
+                }
+              >
+                <span className="w-2 h-2 rounded-full" style={{ background: active.has(p.id) ? p.color : '#d1d5db' }}></span>
+                {p.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Loading */}
+        {loading && (
+          <div className="text-center py-16 text-gray-400">
+            <div className="text-4xl mb-3 animate-pulse">🔍</div>
+            <p className="text-sm">Searching across platforms...</p>
           </div>
         )}
 
-        {/* Platform chips */}
-        <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontSize: 12, color: '#888' }}>Sources:</span>
-          {PLATFORMS.map(p => (
-            <div
-              key={p.id}
-              onClick={() => togglePlatform(p.id)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                border: `1px solid ${active.has(p.id) ? p.color : '#e5e7eb'}`,
-                borderRadius: 20, padding: '4px 12px', fontSize: 13, cursor: 'pointer',
-                background: active.has(p.id) ? p.bg : '#fff',
-                color: active.has(p.id) ? p.color : '#666',
-                fontWeight: active.has(p.id) ? 600 : 400,
-              }}
-            >
-              <span style={{ width: 7, height: 7, borderRadius: '50%', background: p.color, opacity: active.has(p.id) ? 1 : 0.3, display: 'inline-block' }}></span>
-              {p.name}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Loading */}
-      {loading && (
-        <div style={{ textAlign: 'center', padding: 32, color: '#888' }}>
-          🔍 Searching across platforms...
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!loading && !results && (
-        <div style={{ textAlign: 'center', padding: 48, color: '#aaa' }}>
-          🔍 Search a product to compare suppliers
-        </div>
-      )}
-
-      {/* Results */}
-      {!loading && results && (
-        <>
-          <div style={{ fontSize: 14, color: '#888', marginBottom: 12 }}>
-            Comparing <strong style={{ color: '#111' }}>{results.data.length} platforms</strong> for "<strong style={{ color: '#111' }}>{results.query}</strong>"
+        {/* Empty state */}
+        {!loading && !results && (
+          <div className="text-center py-16 text-gray-300">
+            <div className="text-5xl mb-4">🛍️</div>
+            <p className="text-gray-400 text-sm">Search a product to compare suppliers</p>
           </div>
+        )}
 
-          <div style={{ border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden' }}>
+        {/* Results */}
+        {!loading && results && resultData.length > 0 && (
+          <>
+            <p className="text-sm text-gray-500 mb-4">
+              Comparing <span className="font-semibold text-gray-800">{resultData.length} platforms</span> for "<span className="font-semibold text-gray-800">{results.query}</span>"
+            </p>
 
-            {/* Header row */}
-            <div style={{ display: 'grid', gridTemplateColumns: gridCols, background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-              <div style={{ padding: '12px 16px', fontSize: 12, color: '#888', borderRight: '1px solid #e5e7eb' }}>Platform</div>
-              {results.data.map(d => {
-                const p = PLATFORMS.find(x => x.id === d.id)
-                return (
-                  <div key={d.id} style={{ padding: '12px 16px', borderRight: '1px solid #e5e7eb' }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: p.color, marginBottom: 4 }}>{p.name}</div>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: '#111' }}>${d.price.toFixed(2)}</div>
-                    <div style={{ fontSize: 11, color: '#888' }}>🚚 {d.shipping}</div>
-                    <div style={{ fontSize: 11, color: '#888' }}>⭐ {d.rating} ({d.reviews.toLocaleString()})</div>
-                  </div>
-                )
-              })}
-            </div>
+            <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
 
-            {/* Metric rows */}
-            {METRICS.map(m => (
-              <div key={m.key} style={{ display: 'grid', gridTemplateColumns: gridCols, borderBottom: '1px solid #e5e7eb' }}>
-                <div style={{ padding: '10px 16px', fontSize: 12, color: '#888', borderRight: '1px solid #e5e7eb', display: 'flex', alignItems: 'center' }}>{m.label}</div>
-                {results.data.map(d => {
-                  const v = d[m.key]
-                  const c = barColor(v)
+              {/* Platform header row */}
+              <div
+                className="grid border-b border-gray-100"
+                style={{ gridTemplateColumns: `160px ${activePlatforms.map(() => '1fr').join(' ')}` }}
+              >
+                <div className="p-4 bg-gray-50 border-r border-gray-100 flex items-center">
+                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Platform</span>
+                </div>
+                {resultData.map(d => {
+                  const p = PLATFORMS.find(x => x.id === d.id)
                   return (
-                    <div key={d.id} style={{ padding: '10px 16px', borderRight: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ flex: 1, height: 6, background: '#f0f0f0', borderRadius: 3, overflow: 'hidden' }}>
-                        <div style={{ width: `${v}%`, height: '100%', background: c, borderRadius: 3 }}></div>
-                      </div>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: c, width: 32, textAlign: 'right' }}>{v}%</span>
+                    <div key={d.id} className="p-4 border-r border-gray-100 last:border-r-0" style={{ background: p.bg }}>
+                      <div className="text-sm font-bold mb-1" style={{ color: p.color }}>{p.name}</div>
+                      <div className="text-2xl font-bold text-gray-900 mb-1">${d.price.toFixed(2)}</div>
+                      <div className="text-xs text-gray-500">🚚 {d.shipping}</div>
+                      <div className="text-xs text-gray-500">⭐ {d.rating} ({d.reviews.toLocaleString()} reviews)</div>
                     </div>
                   )
                 })}
               </div>
-            ))}
 
-            {/* Pros/Cons */}
-            <div style={{ display: 'grid', gridTemplateColumns: gridCols, borderBottom: '1px solid #e5e7eb', background: '#f9fafb' }}>
-              <div style={{ padding: '10px 16px', fontSize: 12, color: '#888', borderRight: '1px solid #e5e7eb', display: 'flex', alignItems: 'center' }}>Highlights</div>
-              {results.data.map(d => (
-                <div key={d.id} style={{ padding: '10px 16px', borderRight: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 20, background: '#E1F5EE', color: '#0F6E56', width: 'fit-content' }}>✓ {d.pros}</span>
-                  <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 20, background: '#FAECE7', color: '#993C1D', width: 'fit-content' }}>⚠ {d.cons}</span>
+              {/* Metric rows */}
+              {METRICS.map((m, i) => (
+                <div
+                  key={m.key}
+                  className="grid border-b border-gray-100"
+                  style={{ gridTemplateColumns: `160px ${activePlatforms.map(() => '1fr').join(' ')}` }}
+                >
+                  <div className="p-4 bg-gray-50 border-r border-gray-100 flex items-center">
+                    <span className="text-xs font-semibold text-gray-500">{m.label}</span>
+                  </div>
+                  {resultData.map(d => {
+                    const v = d[m.key]
+                    return (
+                      <div key={d.id} className="p-4 border-r border-gray-100 last:border-r-0 flex items-center gap-3">
+                        <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full ${barColor(v)}`} style={{ width: `${v}%` }}></div>
+                        </div>
+                        <span className={`text-xs font-bold w-8 text-right ${textColor(v)}`}>{v}%</span>
+                      </div>
+                    )
+                  })}
                 </div>
               ))}
-            </div>
 
-            {/* Buy buttons */}
-            <div style={{ display: 'grid', gridTemplateColumns: gridCols }}>
-              <div style={{ padding: '12px 16px', borderRight: '1px solid #e5e7eb' }}></div>
-              {results.data.map(d => {
-                const p = PLATFORMS.find(x => x.id === d.id)
-                return (
-                  <div key={d.id} style={{ padding: '12px 16px', borderRight: '1px solid #e5e7eb' }}>
-                    <button style={{ width: '100%', background: p.color, color: '#fff', border: 'none', borderRadius: 8, padding: '8px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                      Buy on {p.name} ↗
-                    </button>
+              {/* Highlights */}
+              <div
+                className="grid border-b border-gray-100 bg-gray-50"
+                style={{ gridTemplateColumns: `160px ${activePlatforms.map(() => '1fr').join(' ')}` }}
+              >
+                <div className="p-4 border-r border-gray-100 flex items-center">
+                  <span className="text-xs font-semibold text-gray-500">Highlights</span>
+                </div>
+                {resultData.map(d => (
+                  <div key={d.id} className="p-4 border-r border-gray-100 last:border-r-0 flex flex-col gap-2">
+                    <span className="text-xs px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 font-medium w-fit">✓ {d.pros}</span>
+                    <span className="text-xs px-2 py-1 rounded-full bg-red-50 text-red-600 font-medium w-fit">⚠ {d.cons}</span>
                   </div>
-                )
-              })}
-            </div>
+                ))}
+              </div>
 
-          </div>
-        </>
-      )}
+              {/* Buy buttons */}
+              <div
+                className="grid"
+                style={{ gridTemplateColumns: `160px ${activePlatforms.map(() => '1fr').join(' ')}` }}
+              >
+                <div className="p-4 border-r border-gray-100 bg-gray-50"></div>
+                {resultData.map(d => {
+                  const p = PLATFORMS.find(x => x.id === d.id)
+                  return (
+                    <div key={d.id} className="p-4 border-r border-gray-100 last:border-r-0">
+                      <button
+                        className="w-full py-2.5 rounded-xl text-white text-xs font-bold hover:opacity-90 transition-opacity"
+                        style={{ background: p.color }}
+                      >
+                        Buy on {p.name} ↗
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+
+            </div>
+          </>
+        )}
+      </main>
+
+      {/* Footer */}
+      <footer className="mt-16 border-t border-gray-200 bg-white py-6">
+        <div className="max-w-6xl mx-auto px-4 text-center text-xs text-gray-400">
+          © 2026 SourceRadar — Compare suppliers across AliExpress, DHgate, Etsy & Banggood
+        </div>
+      </footer>
+
     </div>
   )
 }
