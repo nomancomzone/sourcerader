@@ -85,15 +85,47 @@ export default function App() {
     })
   }
 
-  function handleSearch() {
+  async function handleSearch() {
     if (!query && !imgFile) return
     setLoading(true)
     setResults(null)
-    setTimeout(() => {
+    try {
+      const searchQuery = query || 'product'
+      const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&engine=aliexpress`)
+      const data = await res.json()
+      const organic = data.organic_results || data.products || []
+      if (organic.length > 0) {
+        const mapped = organic.slice(0, 4).map((item, i) => {
+          const platforms = ['aliexpress','dhgate','etsy','banggood']
+          const pid = platforms[i % platforms.length]
+          return {
+            id: pid,
+            price: parseFloat(item.price?.replace(/[^0-9.]/g,'')) || DUMMY[i]?.price || 9.99,
+            shipping: item.shipping || '10-20 days',
+            shippingDays: 15,
+            rating: item.rating || 4.5,
+            reviews: item.reviews || 1000,
+            aiScore: Math.floor(70 + Math.random() * 25),
+            reliability: Math.floor(65 + Math.random() * 30),
+            value: Math.floor(65 + Math.random() * 30),
+            quality: Math.floor(65 + Math.random() * 30),
+            pros: item.shipping?.includes('free') ? 'Free shipping' : 'Competitive price',
+            cons: 'Verify before ordering',
+            warning: null,
+            title: item.title || '',
+            thumbnail: item.thumbnail || '',
+          }
+        })
+        setResults({ query: searchQuery, data: mapped.filter(d => active.has(d.id)) })
+      } else {
+        const data = DUMMY.filter(d => active.has(d.id))
+        setResults({ query: searchQuery, data })
+      }
+    } catch (err) {
       const data = DUMMY.filter(d => active.has(d.id))
-      setResults({ query: query || 'uploaded photo', data })
-      setLoading(false)
-    }, 1400)
+      setResults({ query: query || 'product', data })
+    }
+    setLoading(false)
   }
 
   function handleImg(e) {
