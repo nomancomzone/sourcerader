@@ -1,7 +1,6 @@
 export default async (req, context) => {
   const url = new URL(req.url)
   const query = url.searchParams.get('q')
-  const engine = url.searchParams.get('engine') || 'aliexpress'
 
   if (!query) {
     return new Response(JSON.stringify({ error: 'No query' }), { status: 400 })
@@ -9,15 +8,7 @@ export default async (req, context) => {
 
   const apiKey = process.env.SERPAPI_KEY
 
-  const engineMap = {
-    aliexpress: 'aliexpress',
-    etsy: 'etsy',
-    walmart: 'walmart',
-  }
-
-  const serpEngine = engineMap[engine] || 'aliexpress'
-
-  const serpUrl = `https://serpapi.com/search.json?engine=${serpEngine}&q=${encodeURIComponent(query)}&api_key=${apiKey}`
+  const serpUrl = `https://serpapi.com/search.json?engine=google_shopping&q=${encodeURIComponent(query)}&api_key=${apiKey}&num=8`
 
   try {
     const res = await fetch(serpUrl)
