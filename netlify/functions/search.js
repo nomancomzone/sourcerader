@@ -7,7 +7,7 @@ export default async (req, context) => {
     return new Response(JSON.stringify({ error: 'No query' }), { status: 400 })
   }
 
-  const apiKey = process.env.VITE_SERPAPI_KEY
+  const apiKey = process.env.SERPAPI_KEY
 
   const engineMap = {
     aliexpress: 'aliexpress',
