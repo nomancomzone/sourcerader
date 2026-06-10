@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 
 const PLATFORMS = [
   { id: 'aliexpress', name: 'AliExpress', color: '#FF6A00', bg: '#FFF3EB', border: '#FF6A00' },
@@ -13,6 +14,29 @@ const DUMMY = [
   { id:'etsy',       price:24.00, shipping:'5-10 days',  shippingDays:7,  rating:4.9, reviews:340,   aiScore:91, reliability:95, value:48, quality:96, pros:'Premium quality', cons:'Higher price',  warning: null },
   { id:'banggood',   price:7.80,  shipping:'10-18 days', shippingDays:14, rating:4.7, reviews:5210,  aiScore:79, reliability:80, value:88, quality:76, pros:'Good reviews',    cons:'Average brand', warning: '⚠️ Store opened less than 6 months ago — proceed with caution' },
 ]
+
+const PRICE_HISTORY = {
+  aliexpress: [
+    {day:'May 12',price:7.20},{day:'May 15',price:7.10},{day:'May 18',price:6.90},
+    {day:'May 21',price:7.00},{day:'May 24',price:6.80},{day:'May 27',price:6.60},
+    {day:'May 30',price:6.70},{day:'Jun 02',price:6.55},{day:'Jun 05',price:6.49},{day:'Jun 08',price:6.49},
+  ],
+  dhgate: [
+    {day:'May 12',price:5.80},{day:'May 15',price:5.70},{day:'May 18',price:5.60},
+    {day:'May 21',price:5.50},{day:'May 24',price:5.45},{day:'May 27',price:5.30},
+    {day:'May 30',price:5.25},{day:'Jun 02',price:5.22},{day:'Jun 05',price:5.20},{day:'Jun 08',price:5.20},
+  ],
+  etsy: [
+    {day:'May 12',price:22.00},{day:'May 15',price:22.50},{day:'May 18',price:23.00},
+    {day:'May 21',price:23.50},{day:'May 24',price:24.00},{day:'May 27',price:24.00},
+    {day:'May 30',price:24.00},{day:'Jun 02',price:24.00},{day:'Jun 05',price:24.00},{day:'Jun 08',price:24.00},
+  ],
+  banggood: [
+    {day:'May 12',price:8.50},{day:'May 15',price:8.30},{day:'May 18',price:8.10},
+    {day:'May 21',price:8.00},{day:'May 24',price:7.90},{day:'May 27',price:7.85},
+    {day:'May 30',price:7.82},{day:'Jun 02',price:7.80},{day:'Jun 05',price:7.80},{day:'Jun 08',price:7.80},
+  ],
+}
 
 const METRICS = [
   { key:'aiScore',     label:'AI Score'    },
@@ -365,6 +389,38 @@ export default function App() {
                 })}
               </div>
             </div>
+
+            {/* Price History */}
+<div className="mt-8 bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+  <div className="flex items-center gap-2 mb-5">
+    <span className="text-xl">📈</span>
+    <h2 className="text-base font-bold text-gray-900">Price History</h2>
+    <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium border border-blue-200">Last 30 days</span>
+  </div>
+  <ResponsiveContainer width="100%" height={220}>
+    <LineChart margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+      <XAxis dataKey="day" type="category" allowDuplicatedCategory={false} tick={{ fontSize: 11 }} />
+      <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `$${v}`} />
+      <Tooltip formatter={v => [`$${v}`, '']} />
+      <Legend />
+      {resultData.map(d => {
+        const p = PLATFORMS.find(x => x.id === d.id)
+        return (
+          <Line
+            key={d.id}
+            data={PRICE_HISTORY[d.id]}
+            type="monotone"
+            dataKey="price"
+            name={p.name}
+            stroke={p.color}
+            strokeWidth={2}
+            dot={false}
+          />
+        )
+      })}
+    </LineChart>
+  </ResponsiveContainer>
+</div>
 
             {/* Profit Calculator */}
             <div className="mt-8 bg-white rounded-2xl shadow-md border border-gray-100 p-6">
