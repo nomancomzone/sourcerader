@@ -64,6 +64,14 @@ function textColor(v) {
   return 'text-red-500'
 }
 
+function buyLink(id, query) {
+  const q = encodeURIComponent(query || '')
+  if (id === 'aliexpress') return `https://www.aliexpress.com/wholesale?SearchText=${q}`
+  if (id === 'dhgate')     return `https://www.dhgate.com/wholesale/search.do?searchkey=${q}`
+  if (id === 'banggood')   return `https://www.banggood.com/search/${q}.html`
+  return `https://www.etsy.com/search?q=${q}`
+}
+
 export default function App() {
   const [query, setQuery]               = useState('')
   const [active, setActive]             = useState(new Set(['aliexpress','dhgate','etsy','banggood']))
@@ -74,7 +82,7 @@ export default function App() {
   const [calcSupplier, setCalcSupplier] = useState('')
   const [calcShipping, setCalcShipping] = useState('')
   const [calcSelling, setCalcSelling]   = useState('')
-  const [watchlist, setWatchlist]         = useState([])
+  const [watchlist, setWatchlist]       = useState([])
   const [showWatchlist, setShowWatchlist] = useState(false)
 
   function togglePlatform(id) {
@@ -92,16 +100,16 @@ export default function App() {
     try {
       const searchQuery = query || 'product'
       const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`)
-const data = await res.json()
-const organic = data.shopping_results || []
-if (organic.length > 0) {
-  const mapped = organic.slice(0, 4).map((item, i) => {
+      const data = await res.json()
+      const organic = data.shopping_results || []
+      if (organic.length > 0) {
+        const mapped = organic.slice(0, 4).map((item, i) => {
           const platforms = ['aliexpress','dhgate','etsy','banggood']
           const pid = platforms[i % platforms.length]
           return {
             id: pid,
             price: item.extracted_price || DUMMY[i]?.price || 9.99,
-            shipping: item.shipping || '10-20 days',
+            shipping: item.delivery || '10-20 days',
             shippingDays: 15,
             rating: item.rating || 4.5,
             reviews: item.reviews || 1000,
@@ -109,7 +117,7 @@ if (organic.length > 0) {
             reliability: Math.floor(65 + Math.random() * 30),
             value: Math.floor(65 + Math.random() * 30),
             quality: Math.floor(65 + Math.random() * 30),
-            pros: item.shipping?.includes('free') ? 'Free shipping' : 'Competitive price',
+            pros: item.delivery?.toLowerCase().includes('free') ? 'Free shipping' : 'Competitive price',
             cons: 'Verify before ordering',
             warning: null,
             title: item.title || '',
@@ -118,12 +126,10 @@ if (organic.length > 0) {
         })
         setResults({ query: searchQuery, data: mapped.filter(d => active.has(d.id)) })
       } else {
-        const data = DUMMY.filter(d => active.has(d.id))
-        setResults({ query: searchQuery, data })
+        setResults({ query: searchQuery, data: DUMMY.filter(d => active.has(d.id)) })
       }
     } catch (err) {
-      const data = DUMMY.filter(d => active.has(d.id))
-      setResults({ query: query || 'product', data })
+      setResults({ query: query || 'product', data: DUMMY.filter(d => active.has(d.id)) })
     }
     setLoading(false)
   }
@@ -175,7 +181,7 @@ if (organic.length > 0) {
           </div>
         </div>
       </header>
-      
+
       <main className="max-w-6xl mx-auto px-4 py-8">
 
         {/* Hero */}
@@ -331,7 +337,7 @@ if (organic.length > 0) {
                       <div className="text-2xl font-bold text-gray-900 mb-1">${d.price.toFixed(2)}</div>
                       <div className="text-xs text-gray-500">🚚 {d.shipping}</div>
                       <div className="text-xs text-gray-500">⭐ {d.rating} ({d.reviews.toLocaleString()} reviews)</div>
-                {d.warning && (
+                      {d.warning && (
                         <div className="mt-2 text-xs bg-amber-50 border border-amber-200 text-amber-700 rounded-lg px-2 py-1.5 leading-snug">
                           {d.warning}
                         </div>
@@ -373,7 +379,7 @@ if (organic.length > 0) {
                   </div>
                 ))}
               </div>
-              
+
               {/* Save buttons */}
               <div className="grid border-b border-gray-100" style={{ gridTemplateColumns: `160px ${activePlatforms.map(() => '1fr').join(' ')}` }}>
                 <div className="p-3 border-r border-gray-100 bg-gray-50 flex items-center">
@@ -410,49 +416,53 @@ if (organic.length > 0) {
                   const p = PLATFORMS.find(x => x.id === d.id)
                   return (
                     <div key={d.id} className="p-4 border-r border-gray-100 last:border-r-0">
-                      <button
-                        className="w-full py-2.5 rounded-xl text-white text-xs font-bold hover:opacity-90 transition-opacity"
+                      <a
+                        href={buyLink(d.id, results?.query)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block w-full py-2.5 rounded-xl text-white text-xs font-bold hover:opacity-90 transition-opacity text-center"
                         style={{ background: p.color }}
                       >
                         Buy on {p.name} ↗
-                      </button>
+                      </a>
                     </div>
                   )
                 })}
               </div>
+
             </div>
 
             {/* Price History */}
-<div className="mt-8 bg-white rounded-2xl shadow-md border border-gray-100 p-6">
-  <div className="flex items-center gap-2 mb-5">
-    <span className="text-xl">📈</span>
-    <h2 className="text-base font-bold text-gray-900">Price History</h2>
-    <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium border border-blue-200">Last 30 days</span>
-  </div>
-  <ResponsiveContainer width="100%" height={220}>
-    <LineChart margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-      <XAxis dataKey="day" type="category" allowDuplicatedCategory={false} tick={{ fontSize: 11 }} />
-      <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `$${v}`} />
-      <Tooltip formatter={v => [`$${v}`, '']} />
-      <Legend />
-      {resultData.map(d => {
-        const p = PLATFORMS.find(x => x.id === d.id)
-        return (
-          <Line
-            key={d.id}
-            data={PRICE_HISTORY[d.id]}
-            type="monotone"
-            dataKey="price"
-            name={p.name}
-            stroke={p.color}
-            strokeWidth={2}
-            dot={false}
-          />
-        )
-      })}
-    </LineChart>
-  </ResponsiveContainer>
-</div>
+            <div className="mt-8 bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+              <div className="flex items-center gap-2 mb-5">
+                <span className="text-xl">📈</span>
+                <h2 className="text-base font-bold text-gray-900">Price History</h2>
+                <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium border border-blue-200">Last 30 days</span>
+              </div>
+              <ResponsiveContainer width="100%" height={220}>
+                <LineChart margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                  <XAxis dataKey="day" type="category" allowDuplicatedCategory={false} tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `$${v}`} />
+                  <Tooltip formatter={v => [`$${v}`, '']} />
+                  <Legend />
+                  {resultData.map(d => {
+                    const p = PLATFORMS.find(x => x.id === d.id)
+                    return (
+                      <Line
+                        key={d.id}
+                        data={PRICE_HISTORY[d.id]}
+                        type="monotone"
+                        dataKey="price"
+                        name={p.name}
+                        stroke={p.color}
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                    )
+                  })}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
 
             {/* Profit Calculator */}
             <div className="mt-8 bg-white rounded-2xl shadow-md border border-gray-100 p-6">
@@ -520,39 +530,40 @@ if (organic.length > 0) {
             </div>
           </div>
         )}
+
         {/* Watchlist Modal */}
-{showWatchlist && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[80vh] overflow-y-auto">
-      <div className="flex items-center justify-between p-5 border-b border-gray-100">
-        <h2 className="font-bold text-gray-900">🔖 Watchlist ({watchlist.length})</h2>
-        <button onClick={() => setShowWatchlist(false)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
-      </div>
-      {watchlist.length === 0 ? (
-        <div className="text-center py-12 text-gray-400">
-          <div className="text-4xl mb-3">🔖</div>
-          <p className="text-sm">No saved items yet</p>
-        </div>
-      ) : (
-        <div className="p-4 flex flex-col gap-3">
-          {watchlist.map((w, i) => (
-            <div key={i} className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50">
-              <div>
-                <div className="text-xs font-bold mb-0.5" style={{ color: w.color }}>{w.platform}</div>
-                <div className="text-sm font-semibold text-gray-900">{w.query}</div>
-                <div className="text-xs text-gray-500">${w.price.toFixed(2)} · {w.shipping}</div>
+        {showWatchlist && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[80vh] overflow-y-auto">
+              <div className="flex items-center justify-between p-5 border-b border-gray-100">
+                <h2 className="font-bold text-gray-900">🔖 Watchlist ({watchlist.length})</h2>
+                <button onClick={() => setShowWatchlist(false)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
               </div>
-              <button
-                onClick={() => setWatchlist(prev => prev.filter((_, j) => j !== i))}
-                className="text-gray-300 hover:text-red-400 text-lg ml-4"
-              >✕</button>
+              {watchlist.length === 0 ? (
+                <div className="text-center py-12 text-gray-400">
+                  <div className="text-4xl mb-3">🔖</div>
+                  <p className="text-sm">No saved items yet</p>
+                </div>
+              ) : (
+                <div className="p-4 flex flex-col gap-3">
+                  {watchlist.map((w, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50">
+                      <div>
+                        <div className="text-xs font-bold mb-0.5" style={{ color: w.color }}>{w.platform}</div>
+                        <div className="text-sm font-semibold text-gray-900">{w.query}</div>
+                        <div className="text-xs text-gray-500">${w.price.toFixed(2)} · {w.shipping}</div>
+                      </div>
+                      <button
+                        onClick={() => setWatchlist(prev => prev.filter((_, j) => j !== i))}
+                        className="text-gray-300 hover:text-red-400 text-lg ml-4"
+                      >✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          ))}
-        </div>
-      )}
-    </div>
-  </div>
-)}
+          </div>
+        )}
       </main>
 
       {/* Footer */}
