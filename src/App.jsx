@@ -91,16 +91,16 @@ export default function App() {
     setResults(null)
     try {
       const searchQuery = query || 'product'
-      const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&engine=aliexpress`)
-      const data = await res.json()
-      const organic = data.organic_results || data.products || []
-      if (organic.length > 0) {
-        const mapped = organic.slice(0, 4).map((item, i) => {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`)
+const data = await res.json()
+const organic = data.shopping_results || []
+if (organic.length > 0) {
+  const mapped = organic.slice(0, 4).map((item, i) => {
           const platforms = ['aliexpress','dhgate','etsy','banggood']
           const pid = platforms[i % platforms.length]
           return {
             id: pid,
-            price: parseFloat(item.price?.replace(/[^0-9.]/g,'')) || DUMMY[i]?.price || 9.99,
+            price: item.extracted_price || DUMMY[i]?.price || 9.99,
             shipping: item.shipping || '10-20 days',
             shippingDays: 15,
             rating: item.rating || 4.5,
